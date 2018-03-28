@@ -27,7 +27,7 @@ public class SchedulingConfig {
     }*/
 
     //秒--斜杠(/)的使用（x/y表达一个等步长序列，x为起始值，y为增量步长值）
-    @Scheduled(cron = "0/10 * * * * ?")//每秒执行
+    @Scheduled(cron = "0/20 * * * * ?")//每秒执行
     private void configureTask3(){
         System.out.println(DateUtil.getCurrentDate("yyyy-MM-dd-HH-mm-ss-SSS"));
     }
