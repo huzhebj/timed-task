@@ -27,8 +27,32 @@ public class SchedulingConfig {
     }*/
 
     //秒--斜杠(/)的使用（x/y表达一个等步长序列，x为起始值，y为增量步长值）
-    @Scheduled(cron = "0/20 * * * * ?")//每秒执行
+    /*@Scheduled(cron = "0/20 * * * * ?")
     private void configureTask3(){
+        System.out.println(DateUtil.getCurrentDate("yyyy-MM-dd-HH-mm-ss-SSS"));
+    }*/
+
+    //分--逗号(,)的使用（表达一个列表值）
+   /* @Scheduled(cron = "* 9,10,11 * * * ?")//逢9、10、11分钟的任意时刻
+    private void configureTask4(){
+        System.out.println(DateUtil.getCurrentDate("yyyy-MM-dd-HH-mm-ss-SSS"));
+    }*/
+
+    //分--减号(-)的使用（表达一个范围）
+   /* @Scheduled(cron = "* 16-17 * * * ?")
+    private void configureTask5(){
+        System.out.println(DateUtil.getCurrentDate("yyyy-MM-dd-HH-mm-ss-SSS"));
+    }*/
+
+    //分--星号(*)的使用（表示对应时间域的每一个时刻）
+    /*@Scheduled(cron = "0 * 16 * * ?")
+    private void configureTask6(){
+        System.out.println(DateUtil.getCurrentDate("yyyy-MM-dd-HH-mm-ss-SSS"));
+    }*/
+
+    //分--斜杠(/)的使用（x/y表达一个等步长序列，x为起始值，y为增量步长值）
+    @Scheduled(cron = "0 26/2 * * * ?")
+    private void configureTask7(){
         System.out.println(DateUtil.getCurrentDate("yyyy-MM-dd-HH-mm-ss-SSS"));
     }
 }
