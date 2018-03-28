@@ -115,7 +115,7 @@ public class SchedulingConfig {
      * C：该字符只在日期和星期字段中使用，代表“Calendar”的意思。它的意思是计划所关联的日期，如果日期没有被关联，则相当于日历中所有日期。
      * 例如5C在日期字段中就相当于日历5日以后的第一天。1C在星期字段中相当于星期日后的第一天。
      */
-    //日--逗号(,)的使用（表达一个列表值）
+    /*//日--逗号(,)的使用（表达一个列表值）
     @Scheduled(cron = "0 24 18 28,29 * ?")
     private void configureTask11(){
         System.out.println("日逗号："+DateUtil.getCurrentDate("yyyy-MM-dd-HH-mm-ss-SSS"));
@@ -137,7 +137,7 @@ public class SchedulingConfig {
     @Scheduled(cron = "0 24 18 28/1 * ?")
     private void configureTask14(){
         System.out.println("日斜杠："+DateUtil.getCurrentDate("yyyy-MM-dd-HH-mm-ss-SSS"));
-    }
+    }*/
 
    /* //日--L的使用
     @Scheduled(cron = "0 22 18 l 3 ?")
