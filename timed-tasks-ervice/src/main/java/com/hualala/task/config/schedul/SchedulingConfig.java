@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 @Configuration //主要用于标记配置类，兼备Component的效果。
 @EnableScheduling //开启定时任务
-public class SchedulingConfig1 {
+public class SchedulingConfig {
     //秒--逗号(,)的使用（表达一个列表值）
     /*@Scheduled(cron = "10,20,30 * * * * ?")//每逢10、20、30秒时执行
     private void configureTask1(){
