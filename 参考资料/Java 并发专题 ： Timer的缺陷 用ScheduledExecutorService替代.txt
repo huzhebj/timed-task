@@ -1,0 +1,265 @@
+网址：https://blog.csdn.net/lmj623565791/article/details/27109467
+
+继续并发，上篇博客对于ScheduledThreadPoolExecutor没有进行介绍，说过会和Timer一直单独写一篇Blog.
+
+1、Timer管理延时任务的缺陷
+
+a、以前在项目中也经常使用定时器，比如每隔一段时间清理项目中的一些垃圾文件，每个一段时间进行数据清洗；然而Timer是存在一些缺陷的，因为Timer在执行定时任务时只会创建一个线程，所以如果存在多个任务，且任务时间过长，超过了两个任务的间隔时间，会发生一些缺陷：下面看例子：
+
+Timer的源码：
+
+public class Timer {
+    /**
+     * The timer task queue.  This data structure is shared with the timer
+     * thread.  The timer produces tasks, via its various schedule calls,
+     * and the timer thread consumes, executing timer tasks as appropriate,
+     * and removing them from the queue when they're obsolete.
+     */
+    private TaskQueue queue = new TaskQueue();
+
+    /**
+     * The timer thread.
+     */
+    private TimerThread thread = new TimerThread(queue);
+TimerThread是Thread的子类，可以看出内部只有一个线程。下面看个例子:
+
+package com.zhy.concurrency.timer;
+
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class TimerTest
+{
+	private static long start;
+
+	public static void main(String[] args) throws Exception
+	{
+
+		TimerTask task1 = new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+
+				System.out.println("task1 invoked ! "
+						+ (System.currentTimeMillis() - start));
+				try
+				{
+					Thread.sleep(3000);
+				} catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+
+			}
+		};
+		TimerTask task2 = new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+				System.out.println("task2 invoked ! "
+						+ (System.currentTimeMillis() - start));
+			}
+		};
+		Timer timer = new Timer();
+		start = System.currentTimeMillis();
+		timer.schedule(task1, 1000);
+		timer.schedule(task2, 3000);
+
+	}
+}
+
+ 定义了两个任务，预计是第一个任务1s后执行，第二个任务3s后执行，但是看运行结果：task1 invoked ! 1000
+task2 invoked ! 4000
+ task2实际上是4后才执行，正因为Timer内部是一个线程，而任务1所需的时间超过了两个任务间的间隔导致。下面使用ScheduledThreadPool解决这个问题：
+
+package com.zhy.concurrency.timer;
+
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+public class ScheduledThreadPoolExecutorTest
+{
+	private static long start;
+
+	public static void main(String[] args)
+	{
+		/**
+		 * 使用工厂方法初始化一个ScheduledThreadPool
+		 */
+		ScheduledExecutorService newScheduledThreadPool = Executors
+				.newScheduledThreadPool(2);
+
+		TimerTask task1 = new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+
+					System.out.println("task1 invoked ! "
+							+ (System.currentTimeMillis() - start));
+					Thread.sleep(3000);
+				} catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+
+			}
+		};
+
+		TimerTask task2 = new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+				System.out.println("task2 invoked ! "
+						+ (System.currentTimeMillis() - start));
+			}
+		};
+		start = System.currentTimeMillis();
+		newScheduledThreadPool.schedule(task1, 1000, TimeUnit.MILLISECONDS);
+		newScheduledThreadPool.schedule(task2, 3000, TimeUnit.MILLISECONDS);
+	}
+}
+
+ 输出结果：
+
+task1 invoked ! 1001
+task2 invoked ! 3001
+ 符合我们的预期结果。因为ScheduledThreadPool内部是个线程池，所以可以支持多个任务并发执行。
+
+
+2、Timer当任务抛出异常时的缺陷
+
+如果TimerTask抛出RuntimeException，Timer会停止所有任务的运行：
+
+package com.zhy.concurrency.timer;
+
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
+
+public class ScheduledThreadPoolDemo01
+{
+
+
+	public static void main(String[] args) throws InterruptedException
+	{
+
+		final TimerTask task1 = new TimerTask()
+		{
+
+			@Override
+			public void run()
+			{
+				throw new RuntimeException();
+			}
+		};
+
+		final TimerTask task2 = new TimerTask()
+		{
+
+			@Override
+			public void run()
+			{
+				System.out.println("task2 invoked!");
+			}
+		};
+
+		Timer timer = new Timer();
+		timer.schedule(task1, 100);
+		timer.scheduleAtFixedRate(task2, new Date(), 1000);
+
+
+
+	}
+}
+
+ 上面有两个任务，任务1抛出一个运行时的异常，任务2周期性的执行某个操作，输出结果：
+
+task2 invoked!
+Exception in thread "Timer-0" java.lang.RuntimeException
+	at com.zhy.concurrency.timer.ScheduledThreadPoolDemo01$1.run(ScheduledThreadPoolDemo01.java:24)
+	at java.util.TimerThread.mainLoop(Timer.java:512)
+	at java.util.TimerThread.run(Timer.java:462)
+
+ 由于任务1的一次，任务2也停止运行了。。。下面使用ScheduledExecutorService解决这个问题：
+
+package com.zhy.concurrency.timer;
+
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+
+public class ScheduledThreadPoolDemo01
+{
+
+
+	public static void main(String[] args) throws InterruptedException
+	{
+
+		final TimerTask task1 = new TimerTask()
+		{
+
+			@Override
+			public void run()
+			{
+				throw new RuntimeException();
+			}
+		};
+
+		final TimerTask task2 = new TimerTask()
+		{
+
+			@Override
+			public void run()
+			{
+				System.out.println("task2 invoked!");
+			}
+		};
+
+
+
+		ScheduledExecutorService pool = Executors.newScheduledThreadPool(1);
+		pool.schedule(task1, 100, TimeUnit.MILLISECONDS);
+		pool.scheduleAtFixedRate(task2, 0 , 1000, TimeUnit.MILLISECONDS);
+
+	}
+}
+
+ 代码基本一致，但是ScheduledExecutorService可以保证，task1出现异常时，不影响task2的运行：
+
+task2 invoked!
+task2 invoked!
+task2 invoked!
+task2 invoked!
+task2 invoked!<span style="font-family: Arial, Helvetica, sans-serif;">...</span>
+3、Timer执行周期任务时依赖系统时间
+
+Timer执行周期任务时依赖系统时间，如果当前系统时间发生变化会出现一些执行上的变化，ScheduledExecutorService基于时间的延迟，不会由于系统时间的改变发生执行变化。
+
+
+
+
+上述，基本说明了在以后的开发中尽可能使用ScheduledExecutorService(JDK1.5以后)替代Timer。
+
+
+
+
+好了，如果博客中存在错误，请留言指出~
+
+
+
+
+
+

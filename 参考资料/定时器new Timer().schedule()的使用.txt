@@ -1,0 +1,29 @@
+网址：https://blog.csdn.net/bin622/article/details/52681670
+
+Timer是一种工具，线程用其安排以后在后台线程中执行的任务。可安排任务执行一次，或者定期重复执行。实际上是个线程，定时调度所拥有的TimerTasks。
+TimerTask是一个抽象类，它的子类由 Timer 安排为一次执行或重复执行的任务。实际上就是一个拥有run方法的类，需要定时执行的代码放到run方法体内。
+
+
+Timer timer = new Timer();
+// 注意javax.swing包中也有一个Timer类，如果import中用到swing包,要注意名字的冲突。
+
+TimerTask task = new TimerTask() {
+    public void run() {
+        ... //每次需要执行的代码放到这里面。
+    }
+};
+
+//以下是几种常用调度task的方法：
+timer.schedule(task, time);
+// time为Date类型：在指定时间执行一次（不周期）。
+
+timer.schedule(task, firstTime, period);
+// firstTime为Date类型,period为long
+// 从firstTime时刻开始，每隔period毫秒执行一次。
+
+timer.schedule(task, delay) // delay 为long类型：从现在起过delay毫秒之后执行一次（不周期）
+--------------------------------------------------------
+
+timer.schedule(task, delay, period)
+// delay为long,period为long：从现在起过delay毫秒以后，每隔period
+// 毫秒执行一次。
